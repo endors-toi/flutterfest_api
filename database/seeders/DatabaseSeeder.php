@@ -16,7 +16,6 @@ class DatabaseSeeder extends Seeder
 
         Evento::create([
             'nombre' => 'Feria de Comida',
-            'descripcion' => null,
         ]);
 
         Evento::create([
@@ -31,7 +30,6 @@ class DatabaseSeeder extends Seeder
 
         Evento::create([
             'nombre' => 'Torneo de Ajedrez',
-            'descripcion' => null,
         ]);
 
         Evento::create([

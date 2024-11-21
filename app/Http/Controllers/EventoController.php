@@ -21,12 +21,20 @@ class EventoController extends Controller
             'foto' => 'nullable|image|max:2048',
         ]);
 
+        // en la tabla Eventos no se guarda la foto en sí,
+        // sino su ruta para accederla desde fuera de la API.
         $fotoPath = null;
         if ($request->hasFile('foto')) {
+
+            // se guarda la foto en la carpeta storage/app/public/eventos
             $fotoPath = $request->file('foto')->store('eventos', 'public');
+
+            // se arma la ruta completa para poder accederla desde {url_de_la_API}/storage/{ruta_de_la_foto}.
+            // ej: http://localhost:8000/storage/eventos/imagen.jpg
             $fotoPath = asset('storage/' . $fotoPath);
         }
 
+        // creación común de recurso
         $evento = Evento::create([
             'nombre' => $request->nombre,
             'descripcion' => $request->descripcion,
@@ -50,20 +58,34 @@ class EventoController extends Controller
             'foto' => 'nullable|image|max:2048',
         ]);
 
-        if ($request->hasFile('foto')) {
+        $fotoPath = null;
+        if ($request->hasFile('foto')) { // se revisa si el Request contiene una foto porque se definió como opcional
+
+            // si el evento ya tenía una foto, se elimina del almacenamiento
             if ($evento->foto) {
                 Storage::disk('public')->delete($evento->foto);
             }
-            $evento->foto = $request->file('foto')->store('eventos', 'public');
+
+            // se hace el mismo proceso que en store()
+            $fotoPath = $request->file('foto')->store('eventos', 'public');
+            $fotoPath = asset('storage/' . $fotoPath);
+
+            // actualizamos la ruta en el evento
+            $evento->foto = $fotoPath;
         }
 
-        $evento->update($request->only('nombre', 'descripcion'));
+        // actualizamos los demás campos
+        $evento->nombre = $request->nombre;
+        if ($request->has('descripcion')) { $evento->nombre = $request->nombre; }
+
+        $evento->save();
 
         return response()->json($evento);
     }
 
     public function destroy(Evento $evento)
     {
+        // al eliminar un evento, también se elimina su foto del almacenamiento (si tenía)
         if ($evento->foto) {
             Storage::disk('public')->delete($evento->foto);
         }
